@@ -1,3 +1,5 @@
 <launch>
-<node name="mqtt_bridge_node" pkg="mqtt_bridge" type="mqtt_bridge_node" output="screen" />
+<arg name="server_address" default="mqtt://192.168.10.20:1883" />
+<param name="MQTT/server_address" value="$(arg server_address)" type="str" />
+<node name="mqtt_bridge_node" pkg="mqtt_bridge" type="mqtt_bridge_node" output="screen"/>
 </launch>

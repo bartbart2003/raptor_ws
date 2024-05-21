@@ -4,22 +4,22 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/error/en.h"
 
-ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS)
+ROSTopicHandler::ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, std::shared_ptr<ros::NodeHandle> n, int mqttQOS)
 {
 	mCli = mqttClient;
 	mQOS = mqttQOS;
 
-	ros::NodeHandle n;
-
-	mSub_VescStatus = n.subscribe("/CAN/RX/vesc_status", 100, &ROSTopicHandler::callback_VescStatus, this);
-	mTimer_VescStatus = n.createTimer(ros::Duration(mInterval_VescStatus), &ROSTopicHandler::fire_VescStatus, this);
+	mSub_VescStatus = n->subscribe("/CAN/RX/vesc_status", 100, &ROSTopicHandler::callback_VescStatus, this);
+	mTimer_VescStatus = n->createTimer(ros::Duration(mInterval_VescStatus), &ROSTopicHandler::fire_VescStatus, this);
 
 	mMsg_ZedImuData = std::make_shared<sensor_msgs::Imu>();
-	mSub_ZedImuData = n.subscribe("/zed2/zed_node/imu/data", 100, &ROSTopicHandler::callback_ZedImuData, this);
-	mTimer_ZedImuData = n.createTimer(ros::Duration(mInterval_ZedImuData), &ROSTopicHandler::fire_ZedImuData, this);
+	mSub_ZedImuData = n->subscribe("/zed2/zed_node/imu/data", 100, &ROSTopicHandler::callback_ZedImuData, this);
+	mTimer_ZedImuData = n->createTimer(ros::Duration(mInterval_ZedImuData), &ROSTopicHandler::fire_ZedImuData, this);
 
-	mPub_Wheels = n.advertise<can_wrapper::Wheels>("/CAN/TX/set_motor_vel", 1000);
-	mPub_RoverControl = n.advertise<can_wrapper::RoverControl>("/MQTT/RoverControl", 1000);
+	mPub_RoverControl = n->advertise<can_wrapper::RoverControl>("/MQTT/RoverControl", 1000);
+	mPub_ManipulatorControl = n->advertise<can_wrapper::ManipulatorControl>("/MQTT/ManipulatorControl", 1000);
+	mPub_MissionStatus = n->advertise<can_wrapper::MissionStatus>("/MQTT/MissionStatus", 1000);
+	mPub_RoverStatus = n->advertise<can_wrapper::RoverStatus>("/MQTT/RoverStatus", 1000);
 }
 
 void ROSTopicHandler::publishMqttMessage(const std::string topicName, const char *message)
@@ -147,7 +147,7 @@ void ROSTopicHandler::publishMqttMessage_VescStatus(std::shared_ptr<can_wrapper:
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	d.Accept(writer);
 
-	publishMqttMessage("RappTORS/VescStatus", buffer.GetString());
+	publishMqttMessage("RappTORS/WheelsFeedback", buffer.GetString());
 }
 
 // ###### ZedImuData ######
@@ -299,18 +299,34 @@ void ROSTopicHandler::publishMqttMessage_ZedImuData(std::shared_ptr<sensor_msgs:
 	publishMqttMessage("RappTORS/ZedImuData", buffer.GetString());
 }
 
-// ###### Wheels ######
-
-void ROSTopicHandler::publishMessage_Wheels(can_wrapper::Wheels message)
-{
-	mPub_Wheels.publish(message);
-	ROS_DEBUG("I published (ROS): a message (Wheels)");
-}
-
 // ###### RoverControl ######
 
 void ROSTopicHandler::publishMessage_RoverControl(can_wrapper::RoverControl message)
 {
 	mPub_RoverControl.publish(message);
 	ROS_DEBUG("I published (ROS): a message (RoverControl)");
+}
+
+// ###### ManipulatorControl ######
+
+void ROSTopicHandler::publishMessage_ManipulatorControl(can_wrapper::ManipulatorControl message)
+{
+	mPub_ManipulatorControl.publish(message);
+	ROS_DEBUG("I published (ROS): a message (ManipulatorControl)");
+}
+
+// ###### MissionStatus ######
+
+void ROSTopicHandler::publishMessage_MissionStatus(can_wrapper::MissionStatus message)
+{
+	mPub_MissionStatus.publish(message);
+	ROS_DEBUG("I published (ROS): a message (MissionStatus)");
+}
+
+// ###### RoverStatus ######
+
+void ROSTopicHandler::publishMessage_RoverStatus(can_wrapper::RoverStatus message)
+{
+	mPub_RoverStatus.publish(message);
+	ROS_DEBUG("I published (ROS): a message (RoverStatus)");
 }

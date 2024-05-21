@@ -6,6 +6,9 @@
 #include "can_wrapper/Wheels.h"
 #include "can_wrapper/VescStatus.h"
 #include "can_wrapper/RoverControl.h"
+#include "can_wrapper/ManipulatorControl.h"
+#include "can_wrapper/MissionStatus.h"
+#include "can_wrapper/RoverStatus.h"
 #define RAPIDJSON_HAS_STDSTRING 1
 #include "rapidjson/document.h"
 
@@ -18,10 +21,13 @@ namespace mqtt
 class ROSTopicHandler
 {
 public:
-  ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, int mqttQOS);
+  ROSTopicHandler(std::shared_ptr<mqtt::async_client> mqttClient, std::shared_ptr<ros::NodeHandle> n, int mqttQOS);
 
   void publishMessage_Wheels(can_wrapper::Wheels message);
   void publishMessage_RoverControl(can_wrapper::RoverControl message);
+  void publishMessage_ManipulatorControl(can_wrapper::ManipulatorControl message);
+  void publishMessage_MissionStatus(can_wrapper::MissionStatus message);
+  void publishMessage_RoverStatus(can_wrapper::RoverStatus message);
 
 private:
   void publishMqttMessage(const std::string topicName, const char *message);
@@ -54,8 +60,10 @@ private:
   std::shared_ptr<sensor_msgs::Imu> mMsg_ZedImuData;
   bool mFirst_ZedImuData = true;
 
-  ros::Publisher mPub_Wheels;
   ros::Publisher mPub_RoverControl;
+  ros::Publisher mPub_ManipulatorControl;
+  ros::Publisher mPub_MissionStatus;
+  ros::Publisher mPub_RoverStatus;
 };
 
 #endif // ROS_TOPIC_HANDLER_H
